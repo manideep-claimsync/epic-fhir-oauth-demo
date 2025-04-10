@@ -10,11 +10,10 @@ oauth_service = EpicOAuthService()
 @auth_bp.route('/login', methods=['GET'])
 def login():
     """Initiate the OAuth 2.0 authorization flow with Epic"""
-    auth_url, state, code_verifier = oauth_service.create_authorization_url()
+    auth_url, state = oauth_service.create_authorization_url()
     
     # Store state and code verifier in session
     session['oauth_state'] = state
-    session['code_verifier'] = code_verifier
     
     return jsonify({'auth_url': auth_url})
 
@@ -35,11 +34,8 @@ def callback():
     
     # Exchange the code for an access token
     try:
-        # Get the code verifier from the session
-        code_verifier = session.get('code_verifier')
-        
         # Exchange code for token
-        token_info = oauth_service.exchange_code_for_token(code, code_verifier)
+        token_info = oauth_service.exchange_code_for_token(code)
         
         # Store the tokens in the session
         session['access_token'] = token_info.get('access_token')
