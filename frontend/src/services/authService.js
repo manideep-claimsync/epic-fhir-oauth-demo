@@ -25,21 +25,6 @@ export async function initiateOAuthFlow() {
 }
 
 /**
- * Exchange authorization code for access token
- * 
- * @param {string} code - The authorization code from Epic
- * @returns {Promise} Promise that resolves when exchange is complete
- */
-export async function exchangeAuthCode(code) {
-  try {
-    return await post(config.endpoints.exchange, { code });
-  } catch (error) {
-    console.error('Error exchanging authorization code:', error);
-    throw error;
-  }
-}
-
-/**
  * Check if the user is currently authenticated
  * 
  * @returns {Promise<boolean>} Promise that resolves with authentication status
@@ -51,21 +36,6 @@ export async function checkAuthStatus() {
   } catch (error) {
     console.error('Error checking auth status:', error);
     return false;
-  }
-}
-
-/**
- * Get the current access token
- * 
- * @returns {Promise<string|null>} Promise that resolves with access token or null
- */
-export async function getAccessToken() {
-  try {
-    const response = await get(config.endpoints.token);
-    return response && response.authenticated ? response.access_token : null;
-  } catch (error) {
-    console.error('Error getting access token:', error);
-    return null;
   }
 }
 

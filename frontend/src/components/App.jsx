@@ -20,8 +20,8 @@ function App() {
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        // Check for code in URL (redirected from Epic)
-        const authCode = getUrlParameter('code');
+        // Check for URL parameters
+        const authSuccess = getUrlParameter('auth') === 'success';
         const authError = getUrlParameter('error');
         
         if (authError) {
@@ -30,31 +30,13 @@ function App() {
           return;
         }
         
-        // If we have a code, exchange it for tokens
-        if (authCode) {
-          try {
-            // Send the code to the backend
-            await exchangeAuthCode(authCode);
-            setIsAuthorized(true);
-            
-            // Fetch patient data
-            const data = await fetchPatientData();
-            console.log(data)
-            setPatientData(data);
-          } catch (exchangeError) {
-            console.error('Error exchanging code:', exchangeError);
-            setError('Failed to complete authentication. Please try again.');
-          }
-        } else {
-          // No code, check if we're already authenticated
-          const isAuthenticated = await checkAuthStatus();
-          if (isAuthenticated) {
-            setIsAuthorized(true);
-            
-            // Fetch patient data
-            const data = await fetchPatientData();
-            setPatientData(data);
-          }
+        // If auth=success or we already have a token, check authentication status
+        if (authSuccess || await checkAuthStatus()) {
+          setIsAuthorized(true);
+          
+          // Fetch patient data
+          const data = await fetchPatientData();
+          setPatientData(data);
         }
       } catch (err) {
         console.error('Error initializing app:', err);

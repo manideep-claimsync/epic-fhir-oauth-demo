@@ -1,9 +1,8 @@
 # backend/services/epic_oauth.py
-import secrets
 import requests
 from urllib.parse import urlencode
 from flask import current_app as app
-from utils.security import generate_code_verifier
+from utils.security import generate_random_state
 
 class EpicOAuthService:
     """Service for handling Epic OAuth 2.0 operations"""
@@ -16,35 +15,24 @@ class EpicOAuthService:
             tuple: (authorization_url, state, code_verifier)
         """
         # Generate state and code verifier for PKCE
-        state = secrets.token_hex(16)
-        code_verifier = generate_code_verifier()
+        state = generate_random_state()
         
         # Build the authorization URL parameters
         auth_params = {
             'response_type': 'code',
             'client_id': app.config['EPIC_CLIENT_ID'],
-            'redirect_uri': app.config['FRONTEND_URL'],  # Redirect to frontend instead of backend
+            'redirect_uri': app.config['EPIC_REDIRECT_URI'],
             'state': state,
-            'scope': 'Patient.read Patient.search',
+            'scope': 'openid',
             'aud': app.config['EPIC_FHIR_API_URL']
         }
         
         # Construct the authorization URL with properly encoded query parameters
-        auth_url = f"{app.config['EPIC_AUTH_URL']}?{'&'.join([f'{k}={v}' for k, v in auth_params.items()])}"
-        print(auth_url)
+        auth_url = f"{app.config['EPIC_AUTH_URL']}?{urlencode(auth_params)}"
         
-        return auth_url, state, code_verifier
+        return auth_url, state
     
-    def generate_new_code_verifier(self):
-        """
-        Generate a new code verifier for PKCE
-        
-        Returns:
-            str: A new code verifier
-        """
-        return generate_code_verifier()
-    
-    def exchange_code_for_token(self, code, code_verifier):
+    def exchange_code_for_token(self, code):
         """
         Exchange authorization code for access token
         
@@ -59,9 +47,8 @@ class EpicOAuthService:
         token_data = {
             'grant_type': 'authorization_code',
             'code': code,
-            'redirect_uri': app.config['FRONTEND_URL'],  # Must match what was used in authorization request
+            'redirect_uri': app.config['EPIC_REDIRECT_URI'],
             'client_id': app.config['EPIC_CLIENT_ID'],
-            'code_verifier': code_verifier
         }
 
         # Make the token request
@@ -70,8 +57,6 @@ class EpicOAuthService:
             data=token_data,
             headers={'Content-Type': 'application/x-www-form-urlencoded'}
         )
-
-        print(token_response.status_code)
         
         # Check if the token request was successful
         if token_response.status_code != 200:
