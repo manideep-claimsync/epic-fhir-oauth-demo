@@ -18,6 +18,7 @@ class Config:
     EPIC_CLIENT_ID = os.getenv('EPIC_CLIENT_ID')
     EPIC_CLIENT_SECRET = os.getenv('EPIC_CLIENT_SECRET')
     FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+    EPIC_REDIRECT_URI = os.getenv('EPIC_REDIRECT_URI', 'http://localhost:5001/api/auth/callback')
     
     # Epic API endpoints
     EPIC_AUTH_URL = 'https://fhir.epic.com/interconnect-fhir-oauth/oauth2/authorize'

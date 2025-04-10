@@ -18,39 +18,6 @@ def login():
     
     return jsonify({'auth_url': auth_url})
 
-@auth_bp.route('/exchange', methods=['POST'])
-def exchange_code():
-    """Exchange authorization code sent from frontend"""
-    data = request.json
-    code = data.get('code')
-    
-    if not code:
-        return jsonify({'error': 'No code provided'}), 400
-    
-    try:
-        # Get the code verifier from the session
-        code_verifier = session.get('code_verifier')
-        
-        if not code_verifier:
-            # If no code verifier in session, create a new one
-            # This can happen if the session expired or if the flow started elsewhere
-            code_verifier = oauth_service.generate_new_code_verifier()
-            session['code_verifier'] = code_verifier
-        
-        # Exchange the code for tokens
-        token_info = oauth_service.exchange_code_for_token(code, code_verifier)
-        print(token_info)
-        
-        # Store the tokens in the session
-        session['access_token'] = token_info.get('access_token')
-        session['refresh_token'] = token_info.get('refresh_token')
-        session['expires_in'] = token_info.get('expires_in')
-        
-        return jsonify({'success': True})
-    except Exception as e:
-        print(f"Error exchanging code: {e}")
-        return jsonify({'error': str(e)}), 500
-
 @auth_bp.route('/callback', methods=['GET'])
 def callback():
     """
@@ -89,14 +56,13 @@ def callback():
 
 @auth_bp.route('/token', methods=['GET'])
 def get_token():
-    """Return the current access token to the frontend"""
+    """Check if the user is authenticated but don't return the actual token"""
     access_token = session.get('access_token')
     if not access_token:
         return jsonify({'authenticated': False}), 401
     
     return jsonify({
         'authenticated': True,
-        'access_token': access_token
     })
 
 @auth_bp.route('/logout', methods=['POST'])

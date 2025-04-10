@@ -23,15 +23,14 @@ class EpicOAuthService:
         auth_params = {
             'response_type': 'code',
             'client_id': app.config['EPIC_CLIENT_ID'],
-            'redirect_uri': app.config['FRONTEND_URL'],  # Redirect to frontend instead of backend
+            'redirect_uri': app.config['EPIC_REDIRECT_URI'],
             'state': state,
-            'scope': 'Patient.read Patient.search',
+            'scope': 'openid',
             'aud': app.config['EPIC_FHIR_API_URL']
         }
         
         # Construct the authorization URL with properly encoded query parameters
-        auth_url = f"{app.config['EPIC_AUTH_URL']}?{'&'.join([f'{k}={v}' for k, v in auth_params.items()])}"
-        print(auth_url)
+        auth_url = f"{app.config['EPIC_AUTH_URL']}?{urlencode(auth_params)}"
         
         return auth_url, state, code_verifier
     
@@ -59,7 +58,7 @@ class EpicOAuthService:
         token_data = {
             'grant_type': 'authorization_code',
             'code': code,
-            'redirect_uri': app.config['FRONTEND_URL'],  # Must match what was used in authorization request
+            'redirect_uri': app.config['EPIC_REDIRECT_URI'],
             'client_id': app.config['EPIC_CLIENT_ID'],
             'code_verifier': code_verifier
         }
@@ -70,8 +69,6 @@ class EpicOAuthService:
             data=token_data,
             headers={'Content-Type': 'application/x-www-form-urlencoded'}
         )
-
-        print(token_response.status_code)
         
         # Check if the token request was successful
         if token_response.status_code != 200:
